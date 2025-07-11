@@ -1,0 +1,10 @@
+papersfetcher/
+├── papersfetcher/
+│   ├── __init__.py
+│   ├── fetcher.py          # Logic to fetch & filter papers
+│   └── utils.py           # Helper functions (e.g., affiliation check)
+├── cli.py                  # Command-line entry point
+├── pyproject.toml
+├── README.md
+└── tests/                  # Unit tests
+    └── test_fetcher.py

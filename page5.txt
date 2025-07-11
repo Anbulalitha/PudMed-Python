@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "papersfetcher"
+version = "0.1.0"
+description = "CLI tool to fetch PubMed papers with non-academic authors"
+authors = ["Your Name <you@example.com>"]
+packages = [{ include = "papersfetcher" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+biopython = "^1.81"
+
+[tool.poetry.scripts]
+get-papers-list = "cli:main"

@@ -1,0 +1,75 @@
+from typing import List, Dict
+from Bio import Entrez
+import logging
+
+Entrez.email = "your_email@example.com"  # required by Entrez
+
+def fetch_papers(query: str, debug: bool=False) -> List[Dict]:
+    """
+    Fetch papers matching the query and filter for at least one author with non-academic affiliation.
+    """
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+    logging.debug(f"Fetching papers for query: {query}")
+
+    handle = Entrez.esearch(db="pubmed", term=query, retmax=20)
+    record = Entrez.read(handle)
+    handle.close()
+
+    ids = record["IdList"]
+    logging.debug(f"Found IDs: {ids}")
+
+    results = []
+
+    handle = Entrez.efetch(db="pubmed", id=",".join(ids), rettype="medline", retmode="xml")
+    papers = Entrez.read(handle)
+    handle.close()
+
+    for article in papers["PubmedArticle"]:
+        medline = article["MedlineCitation"]
+        article_info = medline["Article"]
+        pmid = medline["PMID"]
+        title = article_info.get("ArticleTitle", "")
+        pub_date = get_pub_date(article_info)
+        authors = article_info.get("AuthorList", [])
+
+        non_academic_authors = []
+        companies = []
+        corresponding_email = None
+
+        for author in authors:
+            aff = author.get("AffiliationInfo", [{}])[0].get("Affiliation")
+            if aff and is_non_academic(aff):
+                fullname = f"{author.get('ForeName', '')} {author.get('LastName', '')}".strip()
+                non_academic_authors.append(fullname)
+                companies.append(aff)
+            if not corresponding_email and aff and "@" in aff:
+                # crude email extraction
+                parts = aff.split()
+                for part in parts:
+                    if "@" in part:
+                        corresponding_email = part.strip(';,.()')
+
+        if non_academic_authors:
+            results.append({
+                "PubmedID": str(pmid),
+                "Title": title,
+                "Publication Date": pub_date,
+                "Non-academic Author(s)": "; ".join(non_academic_authors),
+                "Company Affiliation(s)": "; ".join(companies),
+                "Corresponding Author Email": corresponding_email or ""
+            })
+    return results
+
+def get_pub_date(article_info) -> str:
+    """
+    Extract publication date in yyyy-mm-dd if possible.
+    """
+    try:
+        date = article_info["Journal"]["JournalIssue"]["PubDate"]
+        year = date.get("Year", "0000")
+        month = date.get("Month", "01")
+        day = date.get("Day", "01")
+        return f"{year}-{month}-{day}"
+    except Exception:
+        return "0000-01-01"

@@ -1,0 +1,25 @@
+import argparse
+import csv
+from papersfetcher.fetcher import fetch_papers
+
+def main():
+    parser = argparse.ArgumentParser(description="Fetch PubMed papers with non-academic authors.")
+    parser.add_argument("query", type=str, help="PubMed query")
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("-f", "--file", type=str, help="Output filename (CSV)")
+    args = parser.parse_args()
+
+    results = fetch_papers(args.query, debug=args.debug)
+
+    if args.file:
+        with open(args.file, "w", newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=results[0].keys())
+            writer.writeheader()
+            writer.writerows(results)
+        print(f"Saved {len(results)} records to {args.file}")
+    else:
+        for row in results:
+            print(row)
+
+if __name__ == "__main__":
+    main()

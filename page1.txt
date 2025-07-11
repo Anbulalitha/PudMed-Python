@@ -1,0 +1,13 @@
+from typing import Optional
+
+def is_non_academic(affiliation: Optional[str]) -> bool:
+    """
+    Returns True if affiliation is likely a company (non-academic).
+    """
+    if not affiliation:
+        return False
+    academic_keywords = [
+        "university", "institute", "college", "hospital", "center", "centre",
+        "school", "faculty", "department", "lab", "laboratory"
+    ]
+    return not any(word.lower() in affiliation.lower() for word in academic_keywords)
